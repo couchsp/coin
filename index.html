@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Video</title>
+</head>
+<body>
+    <!-- YouTube 영상을 포함할 영역 -->
+    <div id="player"></div>
+
+    <!-- YouTube 플레이어 API를 비동기로 로드 -->
+    <script async src="https://www.youtube.com/iframe_api"></script>
+
+    <script>
+        // YouTube 플레이어 API 로드 후 실행될 콜백 함수
+        function onYouTubeIframeAPIReady() {
+            // 유튜브 영상 생성
+            var player = new YT.Player('player', {
+                height: '360',
+                width: '640',
+                videoId: 'CYcLODSeC-c',
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+
+            // 플레이어가 준비되었을 때 호출되는 함수
+            function onPlayerReady(event) {
+                event.target.playVideo(); // 자동 재생
+            }
+
+            // 플레이어 상태 변경 이벤트 핸들러
+            function onPlayerStateChange(event) {
+                if (event.data == YT.PlayerState.PLAYING) {
+                    startTracking();
+                } else {
+                    stopTracking();
+                }
+            }
+
+            // 재생 시간 추적 시작
+            function startTracking() {
+                intervalId = setInterval(function() {
+                    var currentTime = player.getCurrentTime();
+                    // 재생 시간을 서버로 전송
+                    sendWatchTime(currentTime);
+                }, 1000); // 1초마다 실행
+            }
+
+            // 재생 시간 추적 중지
+            function stopTracking() {
+                clearInterval(intervalId);
+            }
+
+            // 재생 시간을 서버로 전송하는 함수
+            function sendWatchTime(currentTime) {
+                // AJAX를 사용하여 서버로 데이터 전송
+                var xhr = new XMLHttpRequest();
+                var url = 'http://localhost:8000/track_watch_time'; // 실제 서버 주소로 변경
+                xhr.open('POST', url);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState == XMLHttpRequest.DONE) {
+                        console.log('Watch time tracked successfully.');
+                    }
+                }
+                var data = {
+                    'video_id': 'CYcLODSeC-c',
+                    'watch_time_seconds': currentTime
+                };
+                xhr.send(JSON.stringify(data));
+            }
+        }
+    </script>
+</body>
+</html>
